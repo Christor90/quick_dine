@@ -7,165 +7,177 @@ import { Booking } from "../models/Booking.js";
 // get all restaurants with search and filter options
 //GET /api/restaurant
 
-export const getRestaurants = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { search, priceRange, rating, location, sort } = req.query;  
-        
-        
-        // build query object
-        const queryObj:any = { status: "approved"}
+export const getRestaurants = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { search, priceRange, rating, location, sort } = req.query;
 
-        if(search) {
-            queryObj.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { tags: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } },
-            ]
-        }
+    // build query object
+    const queryObj: any = { status: "approved" };
 
-        if(priceRange) {
-            const prices = Array.isArray(priceRange) ? priceRange : [priceRange];
-            queryObj.priceRange = { $in: prices };
-        }
+    if (search) {
+      queryObj.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { tags: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
+      ];
+    }
 
-        if(rating) {
-            queryObj.rating = { $gte: parseFloat(rating as string) };
-        }
+    if (priceRange) {
+      const prices = Array.isArray(priceRange) ? priceRange : [priceRange];
+      queryObj.priceRange = { $in: prices };
+    }
 
-        if(location) {
-            queryObj.location = { $regex: location as string, $options: "i" };
-        }
+    if (rating) {
+      queryObj.rating = { $gte: parseFloat(rating as string) };
+    }
 
+    if (location) {
+      queryObj.location = { $regex: location as string, $options: "i" };
+    }
 
-        //sorting
-        let sortOption: any = {createdAt: -1}
-        if(sort === "rating") {
-            sortOption = { rating: -1 }
-        } else if (sort === "price_low") {
-            sortOption = { priceRange: 1 }
-        } else if (sort === "price_high") {
-            sortOption = { priceRange: -1 }
-        }
+    //sorting
+    let sortOption: any = { createdAt: -1 };
+    if (sort === "rating") {
+      sortOption = { rating: -1 };
+    } else if (sort === "price_low") {
+      sortOption = { priceRange: 1 };
+    } else if (sort === "price_high") {
+      sortOption = { priceRange: -1 };
+    }
 
-        const restaurants = await Restaurant.find(queryObj).sort(sortOption);
-        res.json(restaurants);
+    const restaurants = await Restaurant.find(queryObj).sort(sortOption);
+    res.json(restaurants);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
 
-
-    } catch (error: any) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }       
-}
-
-
-
-
-// get featured and exclusive restaurants 
+// get featured and exclusive restaurants
 //GET /api/restaurants/featured
 
-export const getFeaturedRestaurants = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const featured = await Restaurant.find({ status: "approved", $or: [{ featured: true }, { exclusive: true }] }).limit(6);
-        res.json(featured);
-    } catch (error: any) {
-        console.error("Get Featured Restaurants Error:", error);
-        res.status(500).json({ message: "Server Error" });
-    }       
-}
-
-
-
+export const getFeaturedRestaurants = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const featured = await Restaurant.find({
+      status: "approved",
+      $or: [{ featured: true }, { exclusive: true }],
+    }).limit(6);
+    res.json(featured);
+  } catch (error: any) {
+    console.error("Get Featured Restaurants Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
 
 // get single restaurant by slug
 //GET /api/restaurants/ :slug
 
-export const getRestaurantBySlug = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const restaurant = await Restaurant.findOne({ slug: req.params.slug });
-      if (!restaurant) {
-        res.status(404).json({ message: "Restaurant not found" });
-        return;
-      }  
-
-      // if not approved, verify authorization (owner or admin)
-      if (restaurant.status !== "approved") {
-        let isAuthorized = false;
-        if(req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
-          try {
-            const token = req.headers.authorization.split(" ")[1];
-            const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string};
-
-            const user = await User.findById(decoded.id);
-
-            if (user && (user.role === "admin" || (user.role === "owner" && restaurant.owner.toString() === user._id.toString()))) {
-              isAuthorized = true;
-            }
-
-          } catch (error) {
-            // Ignore token verification errors
-          }
-
-        }
-        if (!isAuthorized) {
-          res.status(403).json({ message: "Restaurant not found or pending approval" });
-          return;
-        }
+export const getRestaurantBySlug = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const restaurant = await Restaurant.findOne({ slug: req.params.slug });
+    if (!restaurant) {
+      res.status(404).json({ message: "Restaurant not found" });
+      return;
     }
-        res.json(restaurant);
 
-    } catch (error: any) {
-        console.error(error);
-        res.status(400).json({ message: error.message });
-    }       
-}
+    // if not approved, verify authorization (owner or admin)
+    if (restaurant.status !== "approved") {
+      let isAuthorized = false;
+      if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer ")
+      ) {
+        try {
+          const token = req.headers.authorization.split(" ")[1];
+          const decoded: any = jwt.verify(
+            token,
+            process.env.JWT_SECRET as string,
+          ) as { id: string };
 
+          const user = await User.findById(decoded.id);
 
-
+          if (
+            user &&
+            (user.role === "admin" ||
+              (user.role === "owner" &&
+                restaurant.owner.toString() === user._id.toString()))
+          ) {
+            isAuthorized = true;
+          }
+        } catch (error) {
+          // Ignore token verification errors
+        }
+      }
+      if (!isAuthorized) {
+        res
+          .status(403)
+          .json({ message: "Restaurant not found or pending approval" });
+        return;
+      }
+    }
+    res.json(restaurant);
+  } catch (error: any) {
+    console.error(error);
+    res.status(400).json({ message: error.message });
+  }
+};
 
 // get dynamic seat availability for slots
 //GET /api/restaurants/:id/availability
 
-export const getRestaurantAvailability = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const  { date } = req.query;
-        if(!date) {
-            res.status(400).json({ message: "Please provide a date" });
-            return;
-        }
+export const getRestaurantAvailability = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { date } = req.query;
+    if (!date) {
+      res.status(400).json({ message: "Please provide a date" });
+      return;
+    }
 
-        const restaurant = await Restaurant.findById(req.params.id);
-        if(!restaurant) {
-            res.status(404).json({ message: "Restaurant not found" });
-            return;
-        }
+    const restaurant = await Restaurant.findById(req.params.id);
+    if (!restaurant) {
+      res.status(404).json({ message: "Restaurant not found" });
+      return;
+    }
 
-        const bookingDate = new Date(date as string);
+    const bookingDate = new Date(date as string);
 
-        //Get all active bookings on this date for the restaurant
-        const bookings = await Booking.find({ restaurant: restaurant._id, date: bookingDate, status: "confirmed" });
+    //Get all active bookings on this date for the restaurant
+    const bookings = await Booking.find({
+      restaurant: restaurant._id,
+      date: bookingDate,
+      status: "confirmed",
+    });
 
-        // Map slots to available capacities
-        const availability = restaurant.availableSlots.map((slot) => {
-            const bookedSeats = bookings.filter((b) => b.time === slot).reduce((sum, b) => sum + b.guests, 0);
-  
-            const totalSeats = restaurant.totalSeats || 20; // Default to 20 if not set
-            const availableSeats = Math.max(totalSeats - bookedSeats, 0);
-            return {
-                time: slot,
-                availableSeats,
-                isAvailable: availableSeats > 0
-            };
-            })
+    // Map slots to available capacities
+    const availability = restaurant.availableSlots.map((slot) => {
+      const bookedSeats = bookings
+        .filter((b) => b.time === slot)
+        .reduce((sum, b) => sum + b.guests, 0);
 
-            res.json(availability);
+      const totalSeats = restaurant.totalSeats || 20; // Default to 20 if not set
+      const availableSeats = Math.max(totalSeats - bookedSeats, 0);
+      return {
+        time: slot,
+        availableSeats,
+        isAvailable: availableSeats > 0,
+      };
+    });
 
-
-    } catch (error: any) {
-        console.error(error);
-        res.status(500).json({ message: "Server Error" });
-    }       
-}
-
-
-
-
+    res.json(availability);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};

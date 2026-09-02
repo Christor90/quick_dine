@@ -1,51 +1,53 @@
-import {Document, model, Schema} from "mongoose";
+import { Document, model, Schema } from "mongoose";
 
 export interface IUser extends Document {
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    role?: "user" | "admin" | "owner";
-    createdAt: Date;
-    updatedAt: Date;
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  role?: "user" | "admin" | "owner";
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const UserSchema = new Schema<IUser>({
+const UserSchema = new Schema<IUser>(
+  {
     name: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     email: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-        lowercase: true,
-
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     password: {
-        type: String,
-        required: true,
-        minlength: 6
+      type: String,
+      required: true,
+      minlength: 6,
     },
-        phone: {
-        type: String,
-        required: true,
-        minlength: 6
+    phone: {
+      type: String,
+      required: true,
+      minlength: 6,
     },
-        role: {
-        type: String,
-        enum: ["user", "admin", "owner"], default: "user"
-    }
-}, {timestamps: true});
-
+    role: {
+      type: String,
+      enum: ["user", "admin", "owner"],
+      default: "user",
+    },
+  },
+  { timestamps: true },
+);
 
 UserSchema.set("toJSON", {
-    transform: (doc, ret) => {
-        delete (ret as Partial<IUser>).password;
-        return ret;
-    }
+  transform: (doc, ret) => {
+    delete (ret as Partial<IUser>).password;
+    return ret;
+  },
 });
 
 export const User = model<IUser>("User", UserSchema);
