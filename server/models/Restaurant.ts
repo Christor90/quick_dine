@@ -1,115 +1,113 @@
-
-
-import {Document, model, Schema, Types} from "mongoose";
+import { Document, model, Schema, Types } from "mongoose";
 
 export interface IRestaurant extends Document {
-    name: string;
-    slug: string;
-    description: string;
-    cuisine: string;
-    priceRange: "$" | "$$" | "$$$" | "$$$$";
-    rating: number;
-    reviewCount: number;
-    location: string;
-    address: string;
-    image: string;
-    chef: string;
-    tags: string[];
-    availableSlots: string[];
-    featured: boolean;
-    exclusive: boolean;
-    owner: Types.ObjectId;
-    status: "pending" | "approved" | "rejected";
-    totalSeats: number;
-    createdAt: Date;
-    updatedAt: Date;
+  name: string;
+  slug: string;
+  description: string;
+  cuisine: string;
+  priceRange: "$" | "$$" | "$$$" | "$$$$";
+  rating: number;
+  reviewCount: number;
+  location: string;
+  address: string;
+  image: string;
+  chef: string;
+  tags: string[];
+  availableSlots: string[];
+  featured: boolean;
+  exclusive: boolean;
+  owner: Types.ObjectId;
+  status: "pending" | "approved" | "rejected";
+  totalSeats: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const RestaurantSchema = new Schema<IRestaurant>({
+const RestaurantSchema = new Schema<IRestaurant>(
+  {
     name: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     slug: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-        lowercase: true,
-
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
     },
     description: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
-        cuisine: {
-        type: String,
-        required: true,
-        trim: true
-
+    cuisine: {
+      type: String,
+      required: true,
+      trim: true,
     },
-        rating: {
-        type: Number,
-        default: 5.0,
-        min: 1,
-        max: 5
+    rating: {
+      type: Number,
+      default: 5.0,
+      min: 1,
+      max: 5,
     },
-        reviewCount: {
-        type: Number,
-        default: 0
+    reviewCount: {
+      type: Number,
+      default: 0,
     },
-        location: {
-        type: String,
-        required: true,
-        trim: true
+    location: {
+      type: String,
+      required: true,
+      trim: true,
     },
-        address: {
-        type: String,
-        required: true,
-    },
-
-        image: {
-        type: String,
-        default: "",
+    address: {
+      type: String,
+      required: true,
     },
 
-        chef: {
-        type: String,
-        required: true,
+    image: {
+      type: String,
+      default: "",
     },
-   
-        tags: 
-        [{type: String}],
 
-        availableSlots:
-        [{type: String}],
+    chef: {
+      type: String,
+      required: true,
+    },
 
-        featured: {
-        type: Boolean,
-        default: false },
+    tags: [{ type: String }],
 
-        exclusive: {
-        type: Boolean,
-        default: false },
+    availableSlots: [{ type: String }],
 
-        owner: {
-        type: Schema.Types.ObjectId,
-        ref: "User",  
-        required: true  },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
 
-        status: {
-        type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending" },
+    exclusive: {
+      type: Boolean,
+      default: false,
+    },
 
-        totalSeats: {
-        type: Number,
-        default: 20,
-    }
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
-}, {timestamps: true});
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
 
-
+    totalSeats: {
+      type: Number,
+      default: 20,
+    },
+  },
+  { timestamps: true },
+);
 
 export const Restaurant = model<IRestaurant>("Restaurant", RestaurantSchema);
