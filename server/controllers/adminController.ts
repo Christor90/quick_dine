@@ -25,40 +25,43 @@ export const getAllRestaurants = async (
 
 }
 
-
-
-
 // Approve/reject a restaurant profile
-//PUT /api/admin/restaurant/:id/approve
+// PUT /api/admin/restaurant/:id/approve
 export const approveRestaurant = async (
   req: AuthRequest,
-  res: Response,): Promise<void> => {
+  res: Response,
+): Promise<void> => {
+  try {
+    const { status } = req.body;
 
-    try {
-
-        const status = req.body;
-        if(!status || !["approved", "rejected", "pending"].includes(status.status)){
-            res.status(400).json({ message: "Please provide a valid status" });
-            return;
-        }
-
-        const restaurant = await Restaurant.findById(req.params.id);
-        if(!restaurant){
-            res.status(404).json({ message: "Restaurant Profile not found" });
-            return;
-        }
-
-        restaurant.status = status;
-        await restaurant.save();
-
-        res.json(restaurant);
-
-    } catch (error: any) {
-        console.error(error);
-        res.status(400).json({ message: error.message });
+    if (!status || !["approved", "rejected", "pending"].includes(status)) {
+      res.status(400).json({
+        message: "Please provide a valid status",
+      });
+      return;
     }
 
-}
+    const restaurant = await Restaurant.findById(req.params.id);
+
+    if (!restaurant) {
+      res.status(404).json({
+        message: "Restaurant Profile not found",
+      });
+      return;
+    }
+
+    restaurant.status = status;
+
+    await restaurant.save();
+
+    res.json(restaurant);
+  } catch (error: any) {
+    console.error(error);
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
 
 
 

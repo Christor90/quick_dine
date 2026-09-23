@@ -1,5 +1,6 @@
 
 
+
 import "dotenv/config";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
@@ -7,11 +8,7 @@ import { User } from "./models/User.js";
 import { Restaurant } from "./models/Restaurant.js";
 import { Booking } from "./models/Booking.js";
 
-
-
 const MONGO_URI = process.env.MONGODB_URI || "";
-
-
 
 const seedData = async () => {
     try {
@@ -20,54 +17,57 @@ const seedData = async () => {
         await mongoose.connect(MONGO_URI)
         console.log("Database connnected. Clearing existing collections...");
 
-
         await User.deleteMany({})
         await Restaurant.deleteMany({})
         await Booking.deleteMany({})
 
         console.log("Creating default users...");
 
+        const salt = await bcrypt.genSalt(10);
 
-        const salt  = await bcrypt.genSalt(10);
-        const adminPassword = await bcrypt.hash("admin123", salt);
-        const userPassword = await bcrypt.hash("user123", salt);
-        const ownerPassword = await bcrypt.hash("owner123", salt);
-
-
+        const adminPassword = await bcrypt.hash(
+            process.env.SEED_ADMIN_PASSWORD || "admin123",
+            salt
+        );
+        const userPassword = await bcrypt.hash(
+            process.env.SEED_USER_PASSWORD || "user123",
+            salt
+        );
+        const ownerPassword = await bcrypt.hash(
+            process.env.SEED_OWNER_PASSWORD || "owner123",
+            salt
+        );
 
         //Admin
         const adminUser = await User.create({
-            name: "Alex Mercer",
-            email: "admin@example.com",
+            name: process.env.SEED_ADMIN_NAME || "Admin",
+            email: process.env.SEED_ADMIN_EMAIL || "admin@example.com",
             password: adminPassword,
-            phone: "+01234567788",
+            phone: process.env.SEED_ADMIN_PHONE || "+01234567788",
             role: "admin"
         });
 
         //User
-            const testUser = await User.create({
-            name: "Sarah Jenkins",
-            email: "user@example.com",
+        const testUser = await User.create({
+            name: process.env.SEED_USER_NAME || "Test User",
+            email: process.env.SEED_USER_EMAIL || "user@example.com",
             password: userPassword,
-            phone: "+01234567788",
+            phone: process.env.SEED_USER_PHONE || "+01234567788",
             role: "user"
         });
 
         //Owner
-            const ownerUser = await User.create({
-            name: "Marc Dubois",
-            email: "owner@example.com",
+        const ownerUser = await User.create({
+            name: process.env.SEED_OWNER_NAME || "Owner",
+            email: process.env.SEED_OWNER_EMAIL || "owner@example.com",
             password: ownerPassword,
-            phone: "+01234567788",
+            phone: process.env.SEED_OWNER_PHONE || "+01234567788",
             role: "owner"
         });
 
-
         console.log("creating restaurants...")
 
-
-
-         const restaurantData = [
+        const restaurantData = [
             {
                 name: "L'Essence",
                 slug: "l-essence",
@@ -85,10 +85,8 @@ const seedData = async () => {
                 availableSlots: ["18:00", "19:00", "20:00", "21:00", "22:00"],
                 featured: true,
                 exclusive: false,
-            
             },
             {
-
                 name: "Terraza Cielo",
                 slug: "terraza-cielo",
                 description:
@@ -141,7 +139,6 @@ const seedData = async () => {
                 availableSlots: ["11:30", "13:00", "14:30", "17:30", "19:00", "20:30"],
                 featured: false,
                 exclusive: false,
-
             },
             {
                 name: "Ember Grille",
@@ -181,30 +178,27 @@ const seedData = async () => {
             },
         ];
 
-
         console.log("Inserting restaurants...")
         const updatedRestaurantsData = restaurantData.map((rest, idx) => {
-            const {... restInfo} = rest;
+            const { ...restInfo } = rest;
             return {
                 ...restInfo,
                 owner: ownerUser._id,
                 status: "approved",
                 totalSeats: 20 + idx * 5, // Increment totalSeats for each restaurant
             }
-        })    
+        })
 
         await Restaurant.insertMany(updatedRestaurantsData)
         console.log("Seeding completed successfully! disconnecting...");
 
         await mongoose.disconnect();
         console.log("Database disconnected.");
-        
 
     } catch (error: any) {
         console.error(" seeding fail:", error);
         process.exit(1);
     }
 }
-
 
 seedData();
