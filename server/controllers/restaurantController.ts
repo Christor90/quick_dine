@@ -22,7 +22,7 @@ export const getRestaurants = async (
         { name: { $regex: search, $options: "i" } },
         { tags: { $regex: search, $options: "i" } },
         { location: { $regex: search, $options: "i" } },
-      ];
+      ]
     }
 
     if (priceRange) {
@@ -48,8 +48,8 @@ export const getRestaurants = async (
       sortOption = { priceRange: -1 };
     }
 
-    const restaurants = await Restaurant.find(queryObj).sort(sortOption);
-    res.json(restaurants);
+    const restaurant = await Restaurant.find(queryObj).sort(sortOption);
+    res.json(restaurant);
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: "Server Error" });
